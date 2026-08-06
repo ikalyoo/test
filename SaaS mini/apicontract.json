@@ -1,0 +1,150 @@
+{
+  "api_name": "Farm Management API",
+  "base_url": "TBD",
+  "auth": "Bearer token (Supabase Auth) di header Authorization, kecuali endpoint publik",
+  "date_format": "YYYY-MM-DD",
+
+  "entities": {
+    "User": {
+      "id_uuid": "string (uuid) - PK",
+      "nama": "string",
+      "role": "string"
+    },
+    "Cluster": {
+      "id": "integer - PK",
+      "nama": "string",
+      "jenis_ayam": "string",
+      "pop_awal": "integer",
+      "usia_awal": "integer"
+    },
+    "Daily": {
+      "id": "integer - PK",
+      "cluster_id": "integer - FK ke Cluster.id",
+      "user_id": "string (uuid) - FK ke User.id_uuid, diambil dari token, bukan dikirim client",
+      "tanggal": "string (date)",
+      "mati": "integer",
+      "afkir": "integer",
+      "pop_awal": "integer, auto carry-over dari pop_akhir hari sebelumnya",
+      "pop_akhir": "integer, computed = pop_awal - mati - afkir"
+    },
+    "Feeds_Stok": {
+      "id": "integer - PK",
+      "daily_log": "integer - FK ke Daily.id",
+      "kode_pakan": "string",
+      "stok_awal": "number",
+      "terima": "number",
+      "pakai": "number",
+      "stok_akhir": "number, computed = stok_awal + terima - pakai"
+    },
+    "Egg_Production": {
+      "id": "integer - PK",
+      "daily_log": "integer - FK ke Daily.id",
+      "bagus": "integer",
+      "retak": "integer",
+      "total": "integer, computed = bagus + retak",
+      "berat_kg": "number",
+      "bobot_average": "number, computed = berat_kg / total"
+    },
+    "Vaccine": {
+      "id": "integer - PK",
+      "cluster_id": "integer - FK ke Cluster.id",
+      "tanggal": "string (date)",
+      "jenis": "string"
+    }
+  },
+
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "deskripsi": "Login user",
+      "request": { "email": "string", "password": "string" },
+      "response_201_or_200": { "token": "string", "role": "string" }
+    },
+    {
+      "method": "GET",
+      "path": "/clusters",
+      "deskripsi": "List semua cluster",
+      "response_200": [
+        { "id": 1, "nama": "Kandang A", "jenis_ayam": "string", "pop_awal": 500, "usia_awal": 20 }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/clusters/{id}",
+      "deskripsi": "Detail 1 cluster",
+      "response_200": { "id": 1, "nama": "Kandang A", "jenis_ayam": "string", "pop_awal": 500, "usia_awal": 20 }
+    },
+    {
+      "method": "POST",
+      "path": "/daily-log",
+      "deskripsi": "Input harian per cluster (Daily + Feeds_Stok + Egg_Production sekaligus)",
+      "request": {
+        "cluster_id": 3,
+        "tanggal": "2026-07-09",
+        "mati": 2,
+        "afkir": 1,
+        "feeds_stok": { "kode_pakan": "BR-01", "stok_awal": 120, "terima": 20, "pakai": 30 },
+        "egg_production": { "bagus": 940, "retak": 12, "berat_kg": 58.3 }
+      },
+      "response_201": {
+        "daily": { "id": 1042, "cluster_id": 3, "tanggal": "2026-07-09", "pop_awal": 500, "mati": 2, "afkir": 1, "pop_akhir": 497 },
+        "feeds_stok": { "id": 501, "daily_log": 1042, "kode_pakan": "BR-01", "stok_awal": 120, "terima": 20, "pakai": 30, "stok_akhir": 110 },
+        "egg_production": { "id": 501, "daily_log": 1042, "bagus": 940, "retak": 12, "total": 952, "berat_kg": 58.3, "bobot_average": 0.0612 }
+      },
+      "catatan": "pop_awal, pop_akhir, stok_akhir, total, dan bobot_average dihitung server-side, tidak dikirim dari client."
+    },
+    {
+      "method": "GET",
+      "path": "/daily-log",
+      "deskripsi": "Histori daily log per cluster (filter tanggal)",
+      "query_params": { "cluster_id": "integer", "dari": "string (date)", "sampai": "string (date)" },
+      "response_200": [
+        { "id": 1040, "tanggal": "2026-06-29", "pop_akhir": 495, "egg_production": { "total": 380 } }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/vaccines",
+      "deskripsi": "List riwayat vaksin per cluster",
+      "query_params": { "cluster_id": "integer" },
+      "response_200": [
+        { "id": 12, "cluster_id": 3, "tanggal": "2026-06-15", "jenis": "ND-IB" }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/vaccines",
+      "deskripsi": "Input riwayat vaksin baru",
+      "request": { "cluster_id": 3, "tanggal": "2026-07-09", "jenis": "ND-IB" },
+      "response_201": { "id": 13, "cluster_id": 3, "tanggal": "2026-07-09", "jenis": "ND-IB" }
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/summary",
+      "deskripsi": "Agregat semua cluster (produksi, mortality rate, FCR)",
+      "query_params": { "dari": "string (date)", "sampai": "string (date)" },
+      "response_200": {
+        "total_telur": 45200,
+        "mortality_rate": 1.8,
+        "clusters": [
+          { "cluster_id": 3, "nama": "Kandang A", "hd_persen": 79.5, "fcr": 2.1 }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/export",
+      "deskripsi": "Export laporan Excel/PDF",
+      "query_params": { "dari": "string (date)", "sampai": "string (date)", "format": "string (excel|pdf)" },
+      "response_200": "file"
+    }
+  ],
+
+  "error_responses": {
+    "400": "Bad Request - format/isi request salah",
+    "401": "Unauthorized - token tidak ada / salah / kadaluarsa",
+    "404": "Not Found - data/id yang direferensikan tidak ditemukan",
+    "500": "Internal Server Error - error di server"
+  }
+}

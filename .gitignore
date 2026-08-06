@@ -1,0 +1,11 @@
+# Secrets
+credintials.json
+credentials.json
+apicontract2.json
+
+# Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
