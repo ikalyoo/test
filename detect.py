@@ -44,7 +44,19 @@ def pohon_natal(tinggi):
 
         print()
 
-pohon_natal(7)
+def tengah(size):
+    center = size // 2
+
+    for i in range(size):
+        for j in range(size):
+            if i == 0 or i == size - 1 or j == 0 or j == size - 1:
+                print("N", end=" ")
+            elif i == center and j == center:
+                print("H", end=" ")
+            else:
+                print(" ", end=" ")
+        print()
+        
 
 def percabangan():
     input_user = input("mau bidang apa? ")
@@ -63,6 +75,8 @@ def percabangan():
             ketupat(10)
         case "segitiga_aneh":
             segitiga_aneh(10)
+        case "tengah":
+            tengah(10)
         case _:
             print("bidang tidak tersedia")
             
