@@ -11,24 +11,20 @@ print(f"Chars: {chars}")
 print(f"Key  : {key}")
 
 
-plaintext = input("Enter the plaintext: ")
+plaintext = input("Enter plaintext: ")
 ciphertext = ""
 
-for word in plaintext:
-    index = chars.index(word)
-    ciphertext += key[index]
+for words in plaintext:
+    index = plaintext.index(words)
+    ciphertext += key[chars.index(words)]
+
+print(f"Ciphertext: {ciphertext}")
+
+ciphertext = input("Enter ciphertext: ")
+plaintext = ""
+
+for words in ciphertext:
+    index = ciphertext.index(words)
+    plaintext += chars[key.index(words)]
 
 print(f"Plaintext: {plaintext}")
-print(f"Ciphertext: {ciphertext}")
-
-
-#decryption
-ciphertext = input("Enter the ciphertext: ")
-decrypted_text = ""
-
-for word in ciphertext:
-    index = key.index(word)
-    decrypted_text += chars[index]
-
-print(f"Ciphertext: {ciphertext}")
-print(f"Decrypted Text: {decrypted_text}")
